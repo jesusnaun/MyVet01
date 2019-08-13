@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MyVet01.Web.Data;
 
 namespace MyVet01.Web
 {
@@ -30,6 +32,15 @@ namespace MyVet01.Web
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
+
+
+            //JESHU
+            //AGREGAR UNA CONEXION A BASE DE DATOS CON EL DATA CONTEXT QUE USA SQL Y SE LLAMA DEFAUTLCONNECTION
+            services.AddDbContext<DataContext>(cfg =>
+            {
+                cfg.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            }
+            );
 
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
