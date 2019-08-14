@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,7 @@ using MyVet01.Web.Data.Entities;
 
 namespace MyVet01.Web.Controllers
 {
+    [Authorize]  //A Agendas sólo pueden ingresar Logueados
     public class AgendasController : Controller
     {
         private readonly DataContext _context;
