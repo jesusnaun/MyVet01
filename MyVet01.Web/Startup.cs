@@ -59,6 +59,9 @@ namespace MyVet01.Web
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
+            //PARA QUE VERIFIQUEN LOS DATOS PRECARGADOS
+            services.AddTransient<SeedDb>();
+
             //PARA QUE SE PUEDAN USAR LOS HELPERS Y SUS INTERFASES
             services.AddScoped<IUserHelper, UserHelper>();
             

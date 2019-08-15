@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MyVet01.Web.Data;
 using MyVet01.Web.Data.Entities;
+using MyVet01.Web.Helpers;
+using MyVet01.Web.Models;
 
 namespace MyVet01.Web.Controllers
 {
@@ -16,16 +18,32 @@ namespace MyVet01.Web.Controllers
     {
         private readonly DataContext _context;
 
-        public OwnersController(DataContext context)
+        private readonly IUserHelper _userHelper; //PARA PODER USAR USER AL CREAR OWNER
+
+
+        //public OwnersController(DataContext context)
+        public OwnersController(DataContext context, IUserHelper userHelper) //ESTO PARA PODER USAR USER EN EL OWNER
         {
             _context = context;
+            _userHelper = userHelper;  // PARA PODER USAR USER 
         }
 
+        //// GET: Owners
+        //public async Task<IActionResult> Index()
+        //{
+        //    return View(await _context.Owners.ToListAsync());
+        //}
         // GET: Owners
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            return View(await _context.Owners.ToListAsync());
+            return View(_context.Owners
+                .Include(o => o.User)
+                .Include(p => p.Pets) //incluir tantos modelos como yo desee
+                )
+                ;
         }
+
+
 
         // GET: Owners/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -35,8 +53,14 @@ namespace MyVet01.Web.Controllers
                 return NotFound();
             }
 
+            //var owner = await _context.Owners
+            //    .FirstOrDefaultAsync(m => m.Id == id);
+
             var owner = await _context.Owners
+                  .Include(o => o.User)
+                .Include(p => p.Pets)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (owner == null)
             {
                 return NotFound();
@@ -56,15 +80,65 @@ namespace MyVet01.Web.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id")] Owner owner)
+        //public async Task<IActionResult> Create([Bind("Id")] Owner owner)
+        public async Task<IActionResult> Create(AddUserViewModel model)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(owner);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                //_context.Add(owner);
+                //await _context.SaveChangesAsync();
+
+                var user = new User
+                {
+                    Address = model.Address,
+                    Document = model.Document,
+                    Email = model.Username, 
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    PhoneNumber = model.PhoneNumber,
+                    UserName = model.Username
+                };
+
+                var response = await _userHelper.AddUserAsync(user, model.Password);
+
+                if (response.Succeeded)
+                {
+                    var userInDb = await _userHelper.GetUserByEmailAsync(model.Username);
+                        await _userHelper.AddUserToRoleAsync(userInDb, "User");
+
+                    //SI TODO FUNCIONA OK, PASAMOS A CREAR EL OWNER
+                    var owner = new Owner
+                    {
+                        Agendas = new List<Agenda>(),
+                        Pets = new List<Pet>(),
+                        User = userInDb
+                    };
+
+
+                    //PARA GRABAR EN LA BD
+                    _context.Owners.Add(owner);
+                    //TRY CATCH ANTES DE GRABAR
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                        return RedirectToAction(nameof(Index));
+                    }
+                    catch (Exception ex)
+                    {
+
+                       ModelState.AddModelError(String.Empty, ex.ToString());  //EN CASO FALLE
+                        return View(model);
+                    }
+
+
+                }
+                ModelState.AddModelError(String.Empty, response.Errors.FirstOrDefault().Description);  //EN CASO FALLE
+                //ModelState.AddModelError(String.Empty, "Usuario ya registrado");  
+
+                
             }
-            return View(owner);
+            //return View(owner);
+            return View(model);
         }
 
         // GET: Owners/Edit/5

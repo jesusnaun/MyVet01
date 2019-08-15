@@ -31,7 +31,7 @@ namespace MyVet01.Web.Data.Entities
 
         [MaxLength(100)]
         [Display(Name = "Dirección")]
-        public int Address { get; set; }
+        public string Address { get; set; }
 
 
 
