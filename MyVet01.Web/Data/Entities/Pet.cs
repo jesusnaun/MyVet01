@@ -25,7 +25,7 @@ namespace MyVet01.Web.Data.Entities
 
         [Display(Name = "Nacimiento")]
         [Required(ErrorMessage = "El {0} es obligatorio.")]
-        [DataType(DataType.DateTime)]
+       // [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:yyyy/MM/dd}", ApplyFormatInEditMode = true)]
         public DateTime Born { get; set; }
 

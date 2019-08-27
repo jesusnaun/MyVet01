@@ -64,7 +64,12 @@ namespace MyVet01.Web
 
             //PARA QUE SE PUEDAN USAR LOS HELPERS Y SUS INTERFASES
             services.AddScoped<IUserHelper, UserHelper>();
-            
+
+            services.AddScoped<ICombosHelper, CombosHelper>();
+
+            services.AddScoped<IConverterHelper, ConverterHelper>();
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

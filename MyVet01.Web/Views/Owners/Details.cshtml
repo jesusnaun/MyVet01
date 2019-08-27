@@ -57,7 +57,7 @@
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Modificar</a>
-    <a asp-action="CreatePet" asp-route-id="@Model.Id" class="btn btn-primary">Agregar</a>
+    <a asp-action="AddPet" asp-route-id="@Model.Id" class="btn btn-primary">Agregar Pet</a>
     <a asp-action="Index" class="btn btn-success">Regresar</a>
 </div>
 
@@ -74,6 +74,9 @@ else
             <tr>
                 <th>
                     @Html.DisplayNameFor(model => model.Pets.FirstOrDefault().Name)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Pets.FirstOrDefault().ImageUrl)
                 </th>
                 <th>
                     @Html.DisplayNameFor(model => model.Pets.FirstOrDefault().Race)
@@ -101,13 +104,24 @@ else
                     @Html.DisplayFor(modelItem => item.Name)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.Race )
+                    @*@Html.DisplayFor(modelItem => item.ImageUrl)*@
+
+
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@Url.Content(item.ImageUrl)" alt="Image" style="width:200px;height:200px;max-width: 100%; height: auto;" />
+                    }
+
+
+                    </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Race)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.PetType.Name )
+                    @Html.DisplayFor(modelItem => item.PetType.Name)
                 </td>
                 <td>
-                    @Html.DisplayFor(modelItem => item.BornLocal )
+                    @Html.DisplayFor(modelItem => item.BornLocal)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Remarks)

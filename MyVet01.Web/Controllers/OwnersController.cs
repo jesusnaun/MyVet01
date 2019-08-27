@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -20,12 +21,22 @@ namespace MyVet01.Web.Controllers
 
         private readonly IUserHelper _userHelper; //PARA PODER USAR USER AL CREAR OWNER
 
+        private readonly ICombosHelper _combosHelper; //PARA PODER USAR USER AL CREAR OWNER
+
+        private readonly IConverterHelper _converterHelper; //PARA PODER USAR LOS CONVERTIDORES
 
         //public OwnersController(DataContext context)
-        public OwnersController(DataContext context, IUserHelper userHelper) //ESTO PARA PODER USAR USER EN EL OWNER
+        //ESTO PARA PODER USAR USER EN EL OWNER
+        //public OwnersController(DataContext context, IUserHelper userHelper)
+        public OwnersController(DataContext context, 
+            IUserHelper userHelper,
+            ICombosHelper combosHelper, 
+            IConverterHelper converterHelper)
         {
             _context = context;
             _userHelper = userHelper;  // PARA PODER USAR USER 
+            _combosHelper = combosHelper;
+            _converterHelper = converterHelper; 
         }
 
         //// GET: Owners
@@ -37,8 +48,11 @@ namespace MyVet01.Web.Controllers
         public IActionResult Index()
         {
             return View(_context.Owners
-                .Include(o => o.User)
-                .Include(p => p.Pets) //incluir tantos modelos como yo desee
+              .Include(o => o.User)
+                .Include(o => o.Pets)
+                .ThenInclude(p => p.PetType)
+             
+                //incluir tantos modelos como yo desee
                 )
                 ;
         }
@@ -58,7 +72,8 @@ namespace MyVet01.Web.Controllers
 
             var owner = await _context.Owners
                   .Include(o => o.User)
-                .Include(p => p.Pets)
+                .Include(o => o.Pets)
+                .ThenInclude(p => p.PetType)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (owner == null)
@@ -225,5 +240,99 @@ namespace MyVet01.Web.Controllers
         {
             return _context.Owners.Any(e => e.Id == id);
         }
+
+
+
+
+
+        // GET: Owners/Details/5
+        public async Task<IActionResult> AddPet(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            //cuando no relacione más tablas
+            //FindAsync es mejor que firstorDefault
+            var owner = await _context.Owners.FindAsync(id.Value);
+            //var owner = await _context.Owners
+            //    .FirstOrDefaultAsync(m => m.Id == id);
+
+            
+            if (owner == null)
+            {
+                return NotFound();
+            }
+
+            //var petViewModel = new PetViewModel
+            var model = new PetViewModel
+
+            {
+                Born = DateTime.Today,
+                OwnerId = owner.Id,
+                //PetTypes = GetComboPetTypes()
+                 PetTypes = _combosHelper.GetComboPetTypes()
+            };
+            
+
+
+            return View(model);
+        }
+
+
+        //Lo saco de aquí y lo pongo en helpers
+        //private IEnumerable<SelectListItem> GetComboPetTypes()
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        [HttpPost]
+        public async Task<IActionResult> AddPet(PetViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                //PARA SUBIR IMÁGENES AL SERVER
+                var path = string.Empty;
+
+                if (model.ImageFile != null)
+                {
+                    var guid = Guid.NewGuid().ToString();
+                    var file = $"{guid}.jpg";
+
+                    path = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot\\images\\Pets",
+                        file);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await model.ImageFile.CopyToAsync(stream);
+                    }
+                    path = $"~/images/Pets/{file}";
+                }
+                //****************************
+
+                //var pet = ToPet(model,path);
+                var pet = await _converterHelper.ToPetAsync(model, path);
+
+
+                //A la base de Datos
+                _context.Pets.Add(pet);
+                await _context.SaveChangesAsync();
+                //TE DEVUELVES A LA VISTA DETAILS PERO DEL DUEÑO ID
+                return RedirectToAction($"Details/{model.OwnerId}"); 
+            }
+
+            return View(model);
+
+        }
+
+        //private object ToPet(PetViewModel model, string path)
+        //Y porque lo utilizaremos muchas vences lo mandamos mejor a ConverterHelper
+        //    private Pet ToPet(PetViewModel model, string path)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }
